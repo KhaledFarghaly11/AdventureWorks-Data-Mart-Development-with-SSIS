@@ -334,7 +334,7 @@ CREATE VIEW dbo.stg_vw_erp_fact_ResellerSales AS (
 		OnlineOrderFlag = 0
 );
 
-Create VIEW dbo.stg_vw_erp_product AS (
+CREATE VIEW dbo.stg_vw_erp_product AS (
 	SELECT  
 		p.ProductNumber,
 		p.Name,
@@ -372,6 +372,46 @@ CREATE VIEW dbo.stg_vw_erp_reseller AS (
 		c.StoreId = s.BusinessEntityId
 	  WHERE 
 		PersonID is null
+);
+
+
+CREATE VIEW dbo.stg_vw_erp_fact_EmployeePayHistory AS (
+	Select 
+		b.NationalIDNumber,
+		dt.MonthStart SalaryMonth,
+		eh.Rate,
+		eh.PayFrequency
+	FROM
+		AdventureWorksStaging.hr.EmployeePayHistory eh
+	INNER JOIN ( 
+		SELECT 
+			BusinessEntityID,
+			max(RateChangeDate) CurrentRateDate
+		FROM 
+			AdventureWorksStaging.hr.EmployeePayHistory
+		GROUP BY
+			BusinessEntityID
+	) Mxdt
+	ON 
+		eh.BusinessEntityID = Mxdt.BusinessEntityID AND eh.RateChangeDate = Mxdt.CurrentRateDate
+	LEFT JOIN 
+		hr.Employee b
+	ON
+		b.BusinessEntityID = eh.BusinessEntityID
+	CROSS JOIN (
+		SELECT 
+			CalendarYear,
+			EnglishMonthName,
+			min(fullDateAlternateKey) MonthStart,
+			Max(FullDateAlterNateKey) MonthEnd
+		FROM
+			AdventureWorksDW.dbo.DimDate
+		WHERE
+			CalendarYear = 2014
+		group by
+			CalendarYear,
+			EnglishMonthName
+	) dt
 );
 
 
